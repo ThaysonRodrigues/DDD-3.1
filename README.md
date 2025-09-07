@@ -43,7 +43,6 @@ Preencha a tabela justificando cada tipo (identidade vs. imutabilidade).
 - **Horario** (Value Object)
 - **Dose** (Value Object)
 - **Status** (Value Object/Enum)
-- **TipoDeAlerta** (Value Object)
 
 **Referências a outros agregados (por ID):**  
 - **[PacienteId]** (referencia o agregado Paciente)

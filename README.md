@@ -27,12 +27,10 @@ Preencha a tabela justificando cada tipo (identidade vs. imutabilidade).
 |---|---|---|
 | **Paciente** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
 | **Responsavel** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
-| **Cuidador** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
 | **Medicamento** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
 | **LembreteDeMedicacao** | Entidade | 	Tem uma identidade única (ID) e representa a programação de uma dose. Seu estado muda ao longo do tempo. |
 | **Horario** | Value Object | Representa um horário específico (por exemplo, 14:00). É imutável, e dois horários são iguais se tiverem o mesmo valor. |
 | **Dose** | Value Object | Representa a quantidade e a unidade de um medicamento (por exemplo, 2 comprimidos). É imutável e sua igualdade é baseada no valor (quantidade e unidade). |
-| **TipoDeAlerta** |  Value Object | Representa um tipo de alerta (sonoro, notificação). É imutável, e sua igualdade é baseada no valor. |
 
 > Dica: Promova tipos semânticos: `Email`, `CPF/CNPJ`, `Money`, `IntervaloDeTempo`, `Endereco`, `Percentual`, `Quantidade`, etc. **VOs devem ser imutáveis** e com **igualdade por valor**.
 
@@ -108,36 +106,52 @@ Defina **2–4 eventos** com **payload mínimo** e **momento de publicação** (
 **Exemplo de esqueleto Mermaid:**
 ```mermaid
 classDiagram
-  class AgregadoPrincipal {
+  class LembreteDeMedicacao {
     +Guid Id
-    +Guid OutroAgregadoId
-    +VOImportante Valor
-    +Status Estado
-    +Operacao1(args)
-    +Operacao2(args)
+    +Guid PacienteId
+    +Guid MedicamentoId
+    +Dose Dose
+    +DiaSemana DiaSemana
+    +Horario Horario
+    +Date DataFim
+    +Agendar()
   }
 
-  class VOImportante {
-    +Atributo1
-    +Atributo2
-    +OperacaoVO()
-  }
-
-  class OutroAgregado {
+  class Paciente {
     +Guid Id
   }
 
-  AgregadoPrincipal --> OutroAgregado : por Id
-  AgregadoPrincipal --> VOImportante
+  class Medicamento {
+    +Guid Id
+  }
+
+  class DiaSemana {
+    +string Valor
+  }
+
+  class Horario {
+    +TimeSpan Valor
+  }
+
+  class Dose {
+    +double Quantidade
+    +string Unidade
+  }
+
+  LembreteDeMedicacao --> Paciente : por Id
+  LembreteDeMedicacao --> Medicamento : por Id
+  LembreteDeMedicacao --> DiaSemana
+  LembreteDeMedicacao --> Horario
+  LembreteDeMedicacao --> Dose
 ```
 
 ---
 
 ## ✅ Checklist de Aceitação
-- [ ] **VOs imutáveis** e com **igualdade por valor** (nada de “string de CPF/Email”).
-- [ ] **Boundary do agregado** pequeno e com **invariantes claras**.
-- [ ] **Domínio rico**: operações do negócio como métodos (evitar `set` aberto).
-- [ ] **Repositório** focado na **AR** (sem `IQueryable`/detalhes de ORM no domínio).
+- [X] **VOs imutáveis** e com **igualdade por valor** (nada de “string de CPF/Email”).
+- [X] **Boundary do agregado** pequeno e com **invariantes claras**.
+- [X] **Domínio rico**: operações do negócio como métodos (evitar `set` aberto).
+- [X] **Repositório** focado na **AR** (sem `IQueryable`/detalhes de ORM no domínio).
 
 
 ## 📤 Entrega

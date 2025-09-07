@@ -5,20 +5,18 @@
 
 ---
 
-## 🚀 Quick start (5 passos)
-1. Escolha um **domínio** que você conheça (ex.: **[Seu Domínio]**).
-2. Liste 3–7 **invariantes** que devem estar corretas no **commit**.
-3. Escolha 1–2 **Agregados principais** (comece por **[Agregado Principal]**).
-4. Desenhe a **máquina de estados** e os **eventos** que surgem das transições.
-5. Defina o **Repositório** da AR e como lidará com **consistência** entre agregados.
+## 🧍Integrantes
+1. Thayson Rodrigues de Souza - 361713
+2. Guilherme Henrique de Amorin Sena - 362713
+3. Ricardo Lourenço da Silva - 362046
+4. Nícolas Garcia Maloucaze Pereira - 360381
 
 ---
 
 ## 🩺 1) Sobre o Domínio Escolhido
-**Nome do domínio:** **[Seu Domínio]**  
-**Objetivo do sistema:** **[Frase curta que explica a proposta de valor]**  
-**Principais atores:** **[Lista: Cliente, Vendedor, Motorista, Professor, etc.]**  
-**Contextos (opcional):** **[Contextos/Bounded Contexts propostos]**
+**Nome do domínio:** **Dispensador inteligente de medicação (VôLembrá)**  
+**Objetivo do sistema:** **Assegurar que pacientes, especialmente idosos, tomem seus medicamentos na hora certa, com dispensação automática, alertas e notificações para responsáveis.**  
+**Principais atores:** **Paciente, Responsável, Medicamento e Cuidador**  
 
 ---
 
@@ -27,48 +25,53 @@ Preencha a tabela justificando cada tipo (identidade vs. imutabilidade).
 
 | Elemento | Tipo (Entidade/VO) | Por quê? (identidade/imutável) |
 |---|---|---|
-| **[Elemento A]** | [Entidade/VO] | [Justificativa] |
-| **[Elemento B]** | [Entidade/VO] | [Justificativa] |
-| **[Elemento C]** | [Entidade/VO] | [Justificativa] |
-| **[Elemento D]** | [Entidade/VO] | [Justificativa] |
+| **Paciente** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
+| **Responsavel** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
+| **Cuidador** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
+| **Medicamento** | Entidade | Tem uma identidade única (ID) e um ciclo de vida próprio. |
+| **LembreteDeMedicacao** | Entidade | 	Tem uma identidade única (ID) e representa a programação de uma dose. Seu estado muda ao longo do tempo. |
+| **Horario** | Value Object | Representa um horário específico (por exemplo, 14:00). É imutável, e dois horários são iguais se tiverem o mesmo valor. |
+| **Dose** | Value Object | Representa a quantidade e a unidade de um medicamento (por exemplo, 2 comprimidos). É imutável e sua igualdade é baseada no valor (quantidade e unidade). |
+| **TipoDeAlerta** |  Value Object | Representa um tipo de alerta (sonoro, notificação). É imutável, e sua igualdade é baseada no valor. |
 
 > Dica: Promova tipos semânticos: `Email`, `CPF/CNPJ`, `Money`, `IntervaloDeTempo`, `Endereco`, `Percentual`, `Quantidade`, etc. **VOs devem ser imutáveis** e com **igualdade por valor**.
 
 ---
 
 ## 🏗️ 3) Agregados e Aggregate Root (AR)
-**Agregado Principal:** **[Agregado Principal]**  
-**AR:** **[Nome da AR]**  
+**Agregado Principal:** **LembreteDeMedicacao**  
+**AR:** **LembreteDeMedicacao**  
 **Conteúdo interno do agregado (apenas o necessário para consistência local):**  
-- **[Entidade interna/VO]**
-- **[Entidade interna/VO]**
+- **Horario** (Value Object)
+- **Dose** (Value Object)
+- **Status** (Value Object/Enum)
+- **TipoDeAlerta** (Value Object)
 
 **Referências a outros agregados (por ID):**  
-- **[OutroAgregadoId]** (não conter dentro do agregado)
-- **[OutroAgregadoId]**
-
-**Boundary — Por que cada item está dentro/fora?**  
-- **Dentro porque [precisa de consistência transacional por causa da invariante X]**  
-- **Fora porque [pode esperar/eventual; pertence a outro BC; só precisa de referência por ID]**
+- **[PacienteId]** (referencia o agregado Paciente)
+- **[MedicamentoId]** (referencia o agregado Medicamento)
+- **[ResponsavelId]** (referencia o agregado Responsavel)
 
 ---
 
 ## 🧭 4) Invariantes e Máquina de Estados
 Liste invariantes (devem ser verdadeiras ao final de cada transação).
 
-**Invariantes (exemplos):**
-- **[Não aceitar pagamento acima do limite de crédito]**
-- **[Não permitir slot de horário sobreposto para o mesmo recurso]**
-- **[Não permitir alteração após estado X]**
-- **[Preço Total = soma dos itens] (se aplicável)**
+**Invariantes:**
+- **Um LembreteDeMedicacao deve ser associado a um Paciente existente.**
+- **Um LembreteDeMedicacao deve ser associado a um Medicamento existente.**
+- **Apenas um Paciente (dono do lembrete), Responsavel e o dispositivo (hardware) pode alterar o status do lembrete para 'Tomado', 'EM ATRASO' ou 'Ignorado'.**
+- **O status de um LembreteDeMedicacao não pode retroceder (por exemplo, de 'Tomado' para 'Pendente').**
 
-**Estados e transições da AR [Nome da AR]:**
+**Estados e transições da AR LembreteDeMedicacao:**
 ```
-[EstadoInicial] -> [Estado1] -> [Estado2] -> [EstadoFinal]
+[EstadoInicial] -> [Pendente] -> [Tomado]
+[EstadoInicial] -> [Pendente] -> [Em atraso]
+[EstadoInicial] -> [Pendente] -> [Não tomado]
 Regras:
-- [Transição A] permitida se [condições/invariantes]
-- [Transição B] bloqueada se [condições]
-- [Transição C] exige [política/serviço]
+- A transição para o estado 'Tomado' só é permitida se o lembrete estiver Pendente e a medicação for registrada no horário correto.
+- A transição para o estado 'Em atraso' só é permitida se o lembrete estiver Pendente e a medicação for registrada 15 minutos após o horário correto.
+- A transição para o estado 'Não tomado' só é permitida se o lembrete estiver Pendente e a medicação não for retirada no dispositivo após 1 hora.
 ```
 
 ---
@@ -78,14 +81,13 @@ Regras:
 
 **Linguagem livre** (ex.: C#, Java, Kotlin, TS). Exemplo (C# assíncrono, adapte nomes):
 ```csharp
-public interface I[Agregado]Repository
+public interface ILembreteDeMedicacaoRepository
 {
-    Task<[Agregado]?> ObterPorIdAsync(Guid id, CancellationToken ct = default);
-    Task AdicionarAsync([Agregado] entidade, CancellationToken ct = default);
-    Task SalvarAsync([Agregado] entidade, CancellationToken ct = default);
+    Task<LembreteDeMedicacao?> ObterPorIdAsync(Guid id, CancellationToken ct = default);
+    Task AdicionarAsync(LembreteDeMedicacao lembrete, CancellationToken ct = default);
+    Task SalvarAsync(LembreteDeMedicacao lembrete, CancellationToken ct = default);
 }
 ```
-
 
 ---
 
@@ -94,13 +96,13 @@ Defina **2–4 eventos** com **payload mínimo** e **momento de publicação** (
 
 | Evento | Quando ocorre | Payload mínimo | Interno/Integração | Observações |
 |---|---|---|---|---|
-| **[EventoXOcorrido]** | [ao confirmar/remarcar/etc.] | [ids, valores necessários] | [Interno/Integração] | [idempotência, consumidor] |
-| **[EventoYOcorrida]** | [...] | [...] | [...] | [...] |
-| **[EventoZOcorrida]** | [...] | [...] | [...] | [...] |
+| **LembreteDeMedicacaoTomado** | Ao confirmar a tomada do medicamento | LembreteId, PacienteId, MomentoDaTomada | Interno | Pode ser consumido para atualizar um histórico de doses ou gerar um alerta ao responsável. |
+| **LembreteDeMedicacaoNaoTomado** | Ao ignorar o lembrete | LembreteId, PacienteId | Interno | Pode ser consumido para alertar o responsável ou registrar um evento de não-conformidade |
+| **NovoLembreteCadastrado** | Ao cadastrar um novo lembrete | LembreteId, PacienteId, ResponsavelId, Horario | Interno | Dispara a lógica de agendamento de notificação. |
 
 ---
 
-## 🗺️ 8) Diagrama (Mermaid ou ferramenta à sua escolha)
+## 🗺️ 7) Diagrama (Mermaid ou ferramenta à sua escolha)
 > Mostre **Agregados/AR**, **VOs** e **relacionamentos por ID** entre agregados (não “contenha” outros agregados).
 
 **Exemplo de esqueleto Mermaid:**
